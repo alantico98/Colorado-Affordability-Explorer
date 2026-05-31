@@ -2,51 +2,29 @@
 
 A Dash application for comparing housing affordability across Colorado counties and adding demographic context to understand where housing pressure shows up differently.
 
-The dashboard uses 2024 ACS 5-year county data from the U.S. Census API, representing the 2020-2024 estimate period, and a local county GeoJSON boundary file. The app is designed to run from local files after the data download step.
+The app uses U.S. Census ACS 5-year county data and local GeoJSON boundaries. The included data covers non-overlapping estimate periods: 2010-2014, 2015-2019, and 2020-2024.
 
-## App Features
+## Features
 
-- Colorado county choropleth map for selected affordability, income, housing, or demographic metrics.
-- Ranked bar chart for the highest or lowest counties on the selected metric.
+- Colorado county choropleth map for affordability, income, housing, and demographic metrics.
+- Ranked bar chart showing the highest or lowest counties for the selected metric.
 - Scatterplot for comparing two user-selected metrics.
-- County highlighting for focused comparison.
-- Broader race and ethnicity demographic context from ACS DP05.
-- Narrative notes to help users interpret affordability measures carefully.
-
-## Data
-
-The included CSV is stored at:
-
-```text
-data/colorado_county_acs_2024.csv
-```
-
-The CSV was generated with:
-
-```bash
-python scripts/download_census_data.py
-```
-
-The download script expects a Census API key in:
-
-```bash
-US_CENSUS_API_KEY
-```
-
-Rerun the script after changing Census variables so the local CSV stays aligned with the dashboard controls.
-
-The local map boundary file is stored at:
-
-```text
-data/colorado_counties.geojson
-```
+- County highlighting in the scatterplot for focused comparison.
+- Estimate-period selector and animation toggle for comparing non-overlapping ACS 5-year periods.
+- Narrative notes and labels to help users interpret the dashboard.
 
 ## Run Locally
 
-Install dependencies:
+Create or activate a Python environment, then install dependencies:
 
 ```bash
 pip install -r requirements.txt
+```
+
+If using `uv`, the equivalent command is:
+
+```bash
+uv pip install -r requirements.txt
 ```
 
 Run the app:
@@ -61,6 +39,56 @@ Open:
 http://127.0.0.1:8050
 ```
 
+The app runs from included local data files, so a Census API key is not required to view the dashboard.
+
+## Data
+
+Primary app data:
+
+```text
+data/colorado_county_acs_periods.csv
+```
+
+Fallback single-period data:
+
+```text
+data/colorado_county_acs_2024.csv
+```
+
+Map boundary data:
+
+```text
+data/colorado_counties.geojson
+```
+
+See `data/README.md` for source details and notes about ACS periods, Census tables, and variable mappings.
+
+## Regenerate Census Data
+
+To regenerate the ACS CSV, set a Census API key:
+
+```bash
+export US_CENSUS_API_KEY="your_key_here"
+```
+
+Then run:
+
+```bash
+python scripts/download_census_data.py
+```
+
+To download a custom set of ACS release years:
+
+```bash
+python scripts/download_census_data.py --years 2014 2019 2024
+```
+
+The script writes:
+
+```text
+data/colorado_county_acs_periods.csv
+```
+
 ## Project Notes
 
-The app focuses on explanation rather than data collection. Affordability is represented with ownership and rental metrics, including home-value-to-income ratio, annual rent-to-income percentage, and renter households paying 30% or more of income toward rent.
+Affordability is represented through ownership and rental lenses, including home-value-to-income ratio, annual rent-to-income percentage, and renter households paying 30% or more of income toward rent. Demographic measures are included as context for comparison across communities and should be interpreted alongside population size and local housing conditions.

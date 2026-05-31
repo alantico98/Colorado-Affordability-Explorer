@@ -5,11 +5,12 @@ from pathlib import Path
 
 import pandas as pd
 import plotly.express as px
-from dash import Dash, Input, Output, dcc, html
+from dash import Dash, Input, Output, State, dcc, html, no_update
 
 
 BASE_DIR = Path(__file__).resolve().parent
 DATA_PATH = BASE_DIR / "data" / "colorado_county_acs_2024.csv"
+PERIOD_DATA_PATH = BASE_DIR / "data" / "colorado_county_acs_periods.csv"
 GEOJSON_PATH = BASE_DIR / "data" / "colorado_counties.geojson"
 
 
@@ -144,7 +145,11 @@ METRICS = {
 }
 
 def load_data() -> tuple[pd.DataFrame, dict]:
-    df = pd.read_csv(DATA_PATH, dtype={"fips": str, "state": str, "county": str})
+    source_path = PERIOD_DATA_PATH if PERIOD_DATA_PATH.exists() else DATA_PATH
+    df = pd.read_csv(source_path, dtype={"fips": str, "state": str, "county": str})
+    if "release_year" not in df.columns:
+        df["release_year"] = 2024
+        df["estimate_period"] = "2020-2024"
     with GEOJSON_PATH.open(encoding="utf-8") as file:
         counties = json.load(file)
     return df, counties
@@ -157,6 +162,22 @@ SCATTER_METRICS = {
     for key, value in METRICS.items()
     if key not in {"total_population", "median_age"}
 }
+PERIODS = (
+    df[["release_year", "estimate_period"]]
+    .drop_duplicates()
+    .sort_values("release_year")
+    .reset_index(drop=True)
+)
+PERIOD_OPTIONS = [
+    {"label": period, "value": index}
+    for index, period in PERIODS["estimate_period"].items()
+]
+LATEST_PERIOD_INDEX = len(PERIODS) - 1
+DATA_PERIOD_SUMMARY = (
+    PERIODS.loc[0, "estimate_period"]
+    if len(PERIODS) == 1
+    else f"{PERIODS.loc[0, 'estimate_period']} through {PERIODS.loc[LATEST_PERIOD_INDEX, 'estimate_period']}"
+)
 
 
 def metric_label(metric: str) -> str:
@@ -206,7 +227,7 @@ app.layout = html.Div(
                         html.Div(
                             [
                                 html.Span("Data source"),
-                                html.Strong("U.S. Census ACS 5-year estimates, 2020-2024"),
+                                html.Strong(f"U.S. Census ACS 5-year estimates, {DATA_PERIOD_SUMMARY}"),
                                 html.Small("County-level Data Profile tables DP03, DP04, and DP05."),
                             ],
                             className="source-note",
@@ -231,21 +252,6 @@ app.layout = html.Div(
                         ),
                     ],
                     className="control",
-                ),
-                html.Div(
-                    [
-                        html.Label("Counties to highlight"),
-                        dcc.Dropdown(
-                            id="county-choice",
-                            options=[
-                                {"label": county, "value": county}
-                                for county in df["county_name"].sort_values()
-                            ],
-                            value=["Denver County", "Boulder County", "Pitkin County"],
-                            multi=True,
-                        ),
-                    ],
-                    className="control wide",
                 ),
                 html.Div(
                     [
@@ -279,6 +285,43 @@ app.layout = html.Div(
             ],
             className="controls",
         ),
+        html.Div(
+            [
+                html.Div(
+                    [
+                        html.H2("ACS estimate period"),
+                        html.P(
+                            "Use non-overlapping 5-year ACS periods to compare how county affordability patterns change over time."
+                        ),
+                    ],
+                    className="timeline-copy",
+                ),
+                html.Div(
+                    [
+                        html.Label("Period"),
+                        dcc.RadioItems(
+                            id="period-index",
+                            options=PERIOD_OPTIONS,
+                            value=LATEST_PERIOD_INDEX,
+                            inline=True,
+                        ),
+                    ],
+                    className="timeline-slider",
+                ),
+                html.Div(
+                    [
+                        dcc.Checklist(
+                            id="animate-period",
+                            options=[{"label": "Animate", "value": "animate"}],
+                            value=[],
+                        ),
+                        dcc.Interval(id="period-interval", interval=1600, disabled=True),
+                    ],
+                    className="timeline-animate",
+                ),
+            ],
+            className="timeline-bar",
+        ),
         html.Div(id="metric-note", className="note"),
         html.Div(
             [
@@ -289,12 +332,27 @@ app.layout = html.Div(
                         html.Div(
                             [
                                 html.H2("Compare two metrics"),
-                                html.P(
-                                    "Use this view to test whether affordability, income, and demographic patterns move together across counties."
+                        html.P(
+                            "Use this view to test whether affordability, income, and demographic patterns move together across counties."
+                        ),
+                        html.Div(
+                            [
+                                html.Label("Counties to highlight"),
+                                dcc.Dropdown(
+                                    id="county-choice",
+                                    options=[
+                                        {"label": county, "value": county}
+                                        for county in df["county_name"].sort_values()
+                                    ],
+                                    value=["Denver County", "Boulder County", "Pitkin County"],
+                                    multi=True,
                                 ),
-                                html.Div(
-                                    [
-                                        html.Label("Scatter x-axis"),
+                            ],
+                            className="scatter-control",
+                        ),
+                        html.Div(
+                            [
+                                html.Label("Scatter x-axis"),
                                         dcc.Dropdown(
                                             id="x-metric",
                                             options=make_options(SCATTER_METRICS),
@@ -353,15 +411,19 @@ app.layout = html.Div(
     Input("county-choice", "value"),
     Input("rank-mode", "value"),
     Input("rank-count", "value"),
+    Input("period-index", "value"),
     Input("x-metric", "value"),
     Input("y-metric", "value"),
 )
-def update_dashboard(metric, selected_counties, rank_mode, rank_count, x_metric, y_metric):
+def update_dashboard(metric, selected_counties, rank_mode, rank_count, period_index, x_metric, y_metric):
     selected_counties = selected_counties or []
-    selected = df[df["county_name"].isin(selected_counties)]
+    period_index = LATEST_PERIOD_INDEX if period_index is None else int(period_index)
+    period = PERIODS.iloc[period_index]
+    period_df = df[df["release_year"] == period["release_year"]]
+    selected = period_df[period_df["county_name"].isin(selected_counties)]
 
     fig_map = px.choropleth(
-        df,
+        period_df,
         geojson=colorado_counties,
         locations="fips",
         color=metric,
@@ -379,7 +441,7 @@ def update_dashboard(metric, selected_counties, rank_mode, rank_count, x_metric,
     )
     fig_map.update_geos(fitbounds="locations", visible=False)
     fig_map.update_layout(
-        title=f"{metric_label(metric)} by county",
+        title=f"{metric_label(metric)} by county, {period['estimate_period']}",
         margin={"l": 0, "r": 0, "t": 48, "b": 0},
         coloraxis_colorbar={"title": metric_label(metric), "thickness": 12},
         paper_bgcolor="white",
@@ -387,7 +449,11 @@ def update_dashboard(metric, selected_counties, rank_mode, rank_count, x_metric,
     )
     fig_map.update_traces(marker_line_width=0.7, marker_line_color="#ffffff")
 
-    ranked = df.nlargest(rank_count, metric) if rank_mode == "highest" else df.nsmallest(rank_count, metric)
+    ranked = (
+        period_df.nlargest(rank_count, metric)
+        if rank_mode == "highest"
+        else period_df.nsmallest(rank_count, metric)
+    )
     ranked = ranked.sort_values(metric, ascending=rank_mode == "lowest")
     fig_rank = px.bar(
         ranked,
@@ -411,20 +477,25 @@ def update_dashboard(metric, selected_counties, rank_mode, rank_count, x_metric,
     fig_rank.update_traces(textposition="outside", cliponaxis=False)
 
     scatter_colors = [
-        "#d1495b" if county in selected_counties else "#2f6f73"
-        for county in df["county_name"]
+        "Highlighted counties" if county in selected_counties else "Other counties"
+        for county in period_df["county_name"]
     ]
     fig_scatter = px.scatter(
-        df,
+        period_df,
         x=x_metric,
         y=y_metric,
         size="total_population",
+        color=scatter_colors,
+        color_discrete_map={
+            "Highlighted counties": "#d1495b",
+            "Other counties": "#2f6f73",
+        },
         hover_name="county_name",
         labels={x_metric: metric_title(x_metric), y_metric: metric_title(y_metric)},
-        title=f"{metric_label(y_metric)} vs. {metric_label(x_metric)}",
+        title=f"{metric_label(y_metric)} vs. {metric_label(x_metric)}, {period['estimate_period']}",
     )
     fig_scatter.update_traces(
-        marker={"color": scatter_colors, "line": {"width": 0.8, "color": "white"}, "opacity": 0.82},
+        marker={"line": {"width": 0.8, "color": "white"}, "opacity": 0.82},
         selector={"mode": "markers"},
     )
     if selected.empty:
@@ -447,19 +518,48 @@ def update_dashboard(metric, selected_counties, rank_mode, rank_count, x_metric,
         margin={"l": 8, "r": 8, "t": 70, "b": 12},
         paper_bgcolor="white",
         plot_bgcolor="white",
-        showlegend=False,
+        legend={
+            "title": "",
+            "orientation": "h",
+            "yanchor": "bottom",
+            "y": 1.02,
+            "xanchor": "right",
+            "x": 1,
+        },
     )
     fig_scatter.update_xaxes(showgrid=True, gridcolor="#e7ecef")
     fig_scatter.update_yaxes(showgrid=True, gridcolor="#e7ecef")
 
-    metric_note = f"{metric_label(metric)}: {METRICS[metric]['description']}"
+    metric_note = f"{period['estimate_period']} ACS 5-year estimates. {metric_label(metric)}: {METRICS[metric]['description']}"
     kpis = [
-        make_kpi("Highest", format_value(df[metric].max(), metric), df.loc[df[metric].idxmax(), "county_name"]),
-        make_kpi("Median county", format_value(df[metric].median(), metric), "Median across 64 counties"),
-        make_kpi("Lowest", format_value(df[metric].min(), metric), df.loc[df[metric].idxmin(), "county_name"]),
+        make_kpi(
+            "Highest",
+            format_value(period_df[metric].max(), metric),
+            period_df.loc[period_df[metric].idxmax(), "county_name"],
+        ),
+        make_kpi("Median county", format_value(period_df[metric].median(), metric), "Median across 64 counties"),
+        make_kpi(
+            "Lowest",
+            format_value(period_df[metric].min(), metric),
+            period_df.loc[period_df[metric].idxmin(), "county_name"],
+        ),
     ]
 
     return fig_map, fig_rank, fig_scatter, metric_note, kpis
+
+
+@app.callback(
+    Output("period-index", "value"),
+    Output("period-interval", "disabled"),
+    Input("period-interval", "n_intervals"),
+    Input("animate-period", "value"),
+    State("period-index", "value"),
+)
+def animate_period(_n_intervals, animate_value, current_period):
+    if not animate_value or "animate" not in animate_value or LATEST_PERIOD_INDEX == 0:
+        return no_update, True
+    current_period = LATEST_PERIOD_INDEX if current_period is None else int(current_period)
+    return (current_period + 1) % len(PERIODS), False
 
 
 if __name__ == "__main__":
