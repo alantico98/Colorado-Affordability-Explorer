@@ -1,0 +1,11 @@
+[project]
+name = "colorado-affordability-explorer"
+version = "0.1.0"
+description = "A Dash dashboard for exploring Colorado county affordability and demographic context."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "dash>=3.0.0",
+    "pandas>=3.0.3",
+    "plotly>=6.0.0",
+]
