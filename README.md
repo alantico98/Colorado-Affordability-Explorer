@@ -10,6 +10,7 @@ The dashboard uses 2024 ACS 5-year county data from the U.S. Census API and a lo
 - Ranked bar chart for the highest or lowest counties on the selected metric.
 - Scatterplot for comparing two user-selected metrics.
 - County highlighting for focused comparison.
+- Broader race and ethnicity demographic context from ACS DP05.
 - Narrative notes to help users interpret affordability measures carefully.
 
 ## Data
@@ -31,6 +32,8 @@ The download script expects a Census API key in:
 ```bash
 US_CENSUS_API_KEY
 ```
+
+Rerun the script after changing Census variables so the local CSV stays aligned with the dashboard controls.
 
 The local map boundary file is stored at:
 

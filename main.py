@@ -66,6 +66,55 @@ METRICS = {
         "description": "Civilian labor force unemployment rate.",
         "palette": "Oranges",
     },
+    "white_alone_pct": {
+        "label": "White alone population",
+        "format": ".1f",
+        "suffix": "%",
+        "description": "Share of residents identifying as White alone, regardless of Hispanic or Latino origin.",
+        "palette": "Cividis",
+    },
+    "black_or_african_american_alone_pct": {
+        "label": "Black or African American alone population",
+        "format": ".1f",
+        "suffix": "%",
+        "description": "Share of residents identifying as Black or African American alone.",
+        "palette": "Magma",
+    },
+    "american_indian_alaska_native_alone_pct": {
+        "label": "American Indian and Alaska Native alone population",
+        "format": ".1f",
+        "suffix": "%",
+        "description": "Share of residents identifying as American Indian and Alaska Native alone.",
+        "palette": "Oranges",
+    },
+    "asian_alone_pct": {
+        "label": "Asian alone population",
+        "format": ".1f",
+        "suffix": "%",
+        "description": "Share of residents identifying as Asian alone.",
+        "palette": "Teal",
+    },
+    "native_hawaiian_pacific_islander_alone_pct": {
+        "label": "Native Hawaiian and Pacific Islander alone population",
+        "format": ".1f",
+        "suffix": "%",
+        "description": "Share of residents identifying as Native Hawaiian and Other Pacific Islander alone.",
+        "palette": "Blues",
+    },
+    "some_other_race_alone_pct": {
+        "label": "Some other race alone population",
+        "format": ".1f",
+        "suffix": "%",
+        "description": "Share of residents identifying as some other race alone.",
+        "palette": "Plasma",
+    },
+    "two_or_more_races_pct": {
+        "label": "Two or more races population",
+        "format": ".1f",
+        "suffix": "%",
+        "description": "Share of residents identifying as two or more races.",
+        "palette": "Viridis",
+    },
     "hispanic_or_latino_pct": {
         "label": "Hispanic or Latino population",
         "format": ".1f",
@@ -78,7 +127,7 @@ METRICS = {
         "format": ".1f",
         "suffix": "%",
         "description": "Share of residents identifying as White alone and not Hispanic or Latino.",
-        "palette": "Cividis",
+        "palette": "Greys",
     },
     "median_age": {
         "label": "Median age",
@@ -109,6 +158,7 @@ def load_data() -> tuple[pd.DataFrame, dict]:
 
 
 df, colorado_counties = load_data()
+METRICS = {key: value for key, value in METRICS.items() if key in df.columns}
 
 
 def metric_label(metric: str) -> str:
@@ -359,6 +409,8 @@ def update_dashboard(metric, selected_counties, rank_mode, rank_count, x_metric,
     )
     if selected.empty:
         annotation_text = "Select counties above to highlight them in this comparison."
+    elif len(selected) > 6:
+        annotation_text = f"Highlighted: {len(selected)} selected counties"
     else:
         annotation_text = "Highlighted: " + ", ".join(selected["county_name"].tolist())
     fig_scatter.add_annotation(

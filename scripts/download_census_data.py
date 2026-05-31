@@ -30,6 +30,13 @@ VARIABLES = {
     "DP04_0047PE": "renter_occupied_pct",
     "DP04_0141PE": "rent_30_to_34_9_pct",
     "DP04_0142PE": "rent_35_plus_pct",
+    "DP05_0037PE": "white_alone_pct",
+    "DP05_0045PE": "black_or_african_american_alone_pct",
+    "DP05_0053PE": "american_indian_alaska_native_alone_pct",
+    "DP05_0061PE": "asian_alone_pct",
+    "DP05_0069PE": "native_hawaiian_pacific_islander_alone_pct",
+    "DP05_0074PE": "some_other_race_alone_pct",
+    "DP05_0075PE": "two_or_more_races_pct",
     "DP05_0090PE": "hispanic_or_latino_pct",
     "DP05_0096PE": "white_non_hispanic_pct",
 }
