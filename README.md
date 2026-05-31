@@ -2,7 +2,7 @@
 
 A Dash application for comparing housing affordability across Colorado counties and adding demographic context to understand where housing pressure shows up differently.
 
-The dashboard uses 2024 ACS 5-year county data from the U.S. Census API and a local county GeoJSON boundary file. The app is designed to run from local files after the data download step.
+The dashboard uses 2024 ACS 5-year county data from the U.S. Census API, representing the 2020-2024 estimate period, and a local county GeoJSON boundary file. The app is designed to run from local files after the data download step.
 
 ## App Features
 

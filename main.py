@@ -143,13 +143,6 @@ METRICS = {
     },
 }
 
-SCATTER_METRICS = {
-    key: value
-    for key, value in METRICS.items()
-    if key not in {"total_population", "median_age"}
-}
-
-
 def load_data() -> tuple[pd.DataFrame, dict]:
     df = pd.read_csv(DATA_PATH, dtype={"fips": str, "state": str, "county": str})
     with GEOJSON_PATH.open(encoding="utf-8") as file:
@@ -159,6 +152,11 @@ def load_data() -> tuple[pd.DataFrame, dict]:
 
 df, colorado_counties = load_data()
 METRICS = {key: value for key, value in METRICS.items() if key in df.columns}
+SCATTER_METRICS = {
+    key: value
+    for key, value in METRICS.items()
+    if key not in {"total_population", "median_age"}
+}
 
 
 def metric_label(metric: str) -> str:
@@ -204,6 +202,14 @@ app.layout = html.Div(
                         html.H1("Colorado Affordability Explorer"),
                         html.P(
                             "Compare housing affordability across Colorado counties, then add income and demographic context to see where pressure shows up differently."
+                        ),
+                        html.Div(
+                            [
+                                html.Span("Data source"),
+                                html.Strong("U.S. Census ACS 5-year estimates, 2020-2024"),
+                                html.Small("County-level Data Profile tables DP03, DP04, and DP05."),
+                            ],
+                            className="source-note",
                         ),
                     ],
                     className="title-block",
@@ -270,30 +276,6 @@ app.layout = html.Div(
                     ],
                     className="control compact",
                 ),
-                html.Div(
-                    [
-                        html.Label("Scatter x-axis"),
-                        dcc.Dropdown(
-                            id="x-metric",
-                            options=make_options(SCATTER_METRICS),
-                            value="median_household_income",
-                            clearable=False,
-                        ),
-                    ],
-                    className="control",
-                ),
-                html.Div(
-                    [
-                        html.Label("Scatter y-axis"),
-                        dcc.Dropdown(
-                            id="y-metric",
-                            options=make_options(SCATTER_METRICS),
-                            value="median_home_value",
-                            clearable=False,
-                        ),
-                    ],
-                    className="control",
-                ),
             ],
             className="controls",
         ),
@@ -302,7 +284,45 @@ app.layout = html.Div(
             [
                 html.Div([dcc.Graph(id="county-map", config={"displayModeBar": False})], className="viz viz-large"),
                 html.Div([dcc.Graph(id="rank-chart", config={"displayModeBar": False})], className="viz"),
-                html.Div([dcc.Graph(id="scatter-chart", config={"displayModeBar": False})], className="viz"),
+                html.Div(
+                    [
+                        html.Div(
+                            [
+                                html.H2("Compare two metrics"),
+                                html.P(
+                                    "Use this view to test whether affordability, income, and demographic patterns move together across counties."
+                                ),
+                                html.Div(
+                                    [
+                                        html.Label("Scatter x-axis"),
+                                        dcc.Dropdown(
+                                            id="x-metric",
+                                            options=make_options(SCATTER_METRICS),
+                                            value="median_household_income",
+                                            clearable=False,
+                                        ),
+                                    ],
+                                    className="scatter-control",
+                                ),
+                                html.Div(
+                                    [
+                                        html.Label("Scatter y-axis"),
+                                        dcc.Dropdown(
+                                            id="y-metric",
+                                            options=make_options(SCATTER_METRICS),
+                                            value="median_home_value",
+                                            clearable=False,
+                                        ),
+                                    ],
+                                    className="scatter-control",
+                                ),
+                            ],
+                            className="scatter-controls",
+                        ),
+                        dcc.Graph(id="scatter-chart", config={"displayModeBar": False}),
+                    ],
+                    className="viz scatter-viz",
+                ),
             ],
             className="viz-grid",
         ),

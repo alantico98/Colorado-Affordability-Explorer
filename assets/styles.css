@@ -46,6 +46,35 @@ body {
     padding: 22px 24px;
 }
 
+.source-note {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 10px;
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid var(--line);
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.source-note span {
+    color: var(--accent);
+    font-weight: 800;
+    text-transform: uppercase;
+    font-size: 11px;
+}
+
+.source-note strong {
+    color: var(--ink);
+    font-size: 14px;
+}
+
+.source-note small {
+    color: var(--muted);
+    font-size: 13px;
+}
+
 h1 {
     margin: 0 0 8px;
     font-size: 32px;
@@ -100,7 +129,7 @@ p {
 
 .controls {
     display: grid;
-    grid-template-columns: 1.1fr 1.4fr 0.8fr 0.8fr 1fr 1fr;
+    grid-template-columns: 1.1fr 1.7fr 0.8fr 0.9fr;
     gap: 14px;
     margin-top: 18px;
     padding: 16px;
@@ -123,19 +152,49 @@ p {
 
 .viz-grid {
     display: grid;
-    grid-template-columns: minmax(0, 1.25fr) minmax(360px, 0.75fr);
+    grid-template-columns: minmax(0, 1.45fr) minmax(380px, 0.85fr);
     gap: 18px;
     margin-top: 18px;
 }
 
 .viz {
-    min-height: 440px;
+    min-height: 430px;
     padding: 10px;
 }
 
 .viz-large {
-    grid-row: span 2;
-    min-height: 720px;
+    min-height: 430px;
+}
+
+.scatter-viz {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
+    gap: 16px;
+    min-height: 470px;
+    padding: 16px;
+}
+
+.scatter-controls {
+    align-self: stretch;
+    padding: 4px 8px 4px 4px;
+    border-right: 1px solid var(--line);
+}
+
+.scatter-controls p {
+    margin-bottom: 18px;
+}
+
+.scatter-control + .scatter-control {
+    margin-top: 16px;
+}
+
+.scatter-control label {
+    display: block;
+    margin-bottom: 7px;
+    color: #324044;
+    font-size: 13px;
+    font-weight: 700;
 }
 
 .reader-note {
@@ -164,9 +223,19 @@ input[type="radio"] {
         grid-template-columns: 1fr;
     }
 
-    .viz-large {
-        grid-row: auto;
-        min-height: 560px;
+    .viz-large,
+    .scatter-viz {
+        min-height: 520px;
+    }
+
+    .scatter-viz {
+        grid-template-columns: 1fr;
+    }
+
+    .scatter-controls {
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+        padding: 4px 4px 16px;
     }
 
     .controls {
