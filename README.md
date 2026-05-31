@@ -41,6 +41,26 @@ http://127.0.0.1:8050
 
 The app runs from included local data files, so a Census API key is not required to view the dashboard.
 
+## Run With Docker
+
+Build the image:
+
+```bash
+docker build -t colorado-affordability-explorer .
+```
+
+Run the container:
+
+```bash
+docker run --rm -p 8050:8050 colorado-affordability-explorer
+```
+
+Open:
+
+```text
+http://127.0.0.1:8050
+```
+
 ## Data
 
 Primary app data:

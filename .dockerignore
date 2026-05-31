@@ -1,0 +1,12 @@
+.git/
+.venv/
+__pycache__/
+*.py[cod]
+*.log
+.env
+.env.*
+.DS_Store
+Thumbs.db
+htmlcov/
+.coverage
+data/us_counties_fips.geojson

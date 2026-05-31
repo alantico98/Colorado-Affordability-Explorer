@@ -156,6 +156,10 @@ def load_data() -> tuple[pd.DataFrame, dict]:
 
 
 df, colorado_counties = load_data()
+COUNTY_OPTIONS = [
+    {"label": county, "value": county}
+    for county in sorted(df["county_name"].unique())
+]
 METRICS = {key: value for key, value in METRICS.items() if key in df.columns}
 SCATTER_METRICS = {
     key: value
@@ -340,10 +344,7 @@ app.layout = html.Div(
                                 html.Label("Counties to highlight"),
                                 dcc.Dropdown(
                                     id="county-choice",
-                                    options=[
-                                        {"label": county, "value": county}
-                                        for county in df["county_name"].sort_values()
-                                    ],
+                                    options=COUNTY_OPTIONS,
                                     value=["Denver County", "Boulder County", "Pitkin County"],
                                     multi=True,
                                 ),
@@ -563,4 +564,4 @@ def animate_period(_n_intervals, animate_value, current_period):
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=8050, debug=True)
